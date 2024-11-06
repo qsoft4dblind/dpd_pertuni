@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <base target="_top">
+    <link rel="stylesheet" type="text/css" href="gaya tulisan.css">
+</head>
+<body>
+    <img class="img-center" src="pertuni.jpg" alt="Logo Pertuni"> <!-- Remove width attribute to allow automatic resizing -->
+  <header>
+        <h1>Menu Pengumuman</h1>
+
+        <button class="back-button" onclick="window.location.href='admin anggota.html'">Kembali</button>
+
+        <div id="displayData"></div>
+        
+        <!-- FIREBASE -->
+        <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+<script src="script.js"></script>
+        
+        <script>
+
+            // Get a reference to the database service
+            const database = firebase.database();
+
+            // Reference to the 'pertuni/orders' node in the database
+            const ordersRef = database.ref('pertuni/orders');
+
+            // Function to format the time to Indojakarta time
+            function formatIndojakartaTime(time) {
+                return new Intl.DateTimeFormat('en-ID', {
+                    timeZone: 'Asia/Jakarta',
+                    dateStyle: 'medium',
+                    timeStyle: 'medium'
+                }).format(new Date(time));
+            }
+
+            // Function to min 3 minutes to the delivery time
+            function minus3Minutes(time) {
+                return new Date(time).getTime() - 3 * 60 * 1000;
+            }
+
+            // Attach an asynchronous callback to read the data at our reference
+            ordersRef.on('value', function (snapshot) {
+                document.getElementById('displayData').innerHTML = ""; // Clear display data before repopulating
+                snapshot.forEach(function (childSnapshot) {
+                    var data = childSnapshot.val();
+                    var key = childSnapshot.key;
+
+                    // Minus 3 minutes from the delivery time
+                    data.deliveryTime = minus3Minutes(data.deliveryTime);
+
+                    // Create a new div element
+                    var orderDiv= document.createElement('div');
+                    orderDiv.id = key;
+                    orderDiv.innerHTML += '<p>Waktu Pengiriman Formulir: ' + formatIndojakartaTime(data.deliveryTime) + '</p>';
+                    orderDiv.innerHTML += '<p>Pengumuman: ' + data.pengumuman + '</p>';
+
+                    // Append the new div element to the 'displayData' div
+                    document.getElementById('displayData').appendChild(orderDiv);
+                });
+            }, function (error) {
+                console.error(error);
+            });
+        </script>
+    </header>
+
+          <a href="https://forms.gle/XHo1oJFAvb5bBcL19" target="_blank"</a>Daftar Sekarang</a>
+<br> 
+<button onclick="fetchData(1)">Lihat Nama yang mendaftar</button>
+    <br><br>
+    <p id="total-data"></p>
+    <div id="data-container">
+        <!-- Data will be inserted here -->
+    </div>
+    <br>
+    <script>
+        // Function to fetch data from Google Sheets
+        function fetchData(pageNumber) {
+            var url = 'https://script.google.com/macros/s/AKfycbx9JIoqMbEN_j89n30FOxBYVAqhPRfeuQaxan5P5lBLLy9_IgWtkLek1eBVYDzc9nzXVg/exec?page=' + pageNumber;
+            fetch(url)
+                .then(response => response.json())
+                .then(data => displayData(data))
+                .catch(error => console.error('Error fetching data:', error));
+        }
+
+        // Function to display data fetched from Google Sheets
+        function displayData(data) {
+            var dataContainer = document.getElementById('data-container');
+            dataContainer.innerHTML = '';
+            var count = 0;
+            data.forEach(row => {
+                if (row['nama pendaftar']) {
+                    var para = document.createElement('p');
+                    para.textContent = row['nama pendaftar'];
+                    dataContainer.appendChild(para);
+                    count++;
+                }
+            });
+            document.getElementById('total-data').innerText = "Jumlah Pendaftar: " + count;
+        }
+    </script>
+</body>
+</html>
